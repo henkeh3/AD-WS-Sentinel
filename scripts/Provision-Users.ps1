@@ -7,7 +7,7 @@ Organization: Atea
 Filename:     createDataFactoryResources.ps1
 ===========================================================================
 .DESCRIPTION
-Creates 500 users in active directory
+Creates 2000 users in active directory
 
 #>
 
@@ -100,7 +100,7 @@ catch
 }
 
 # Citys
-$Citys = @("Östersund","Åre","Luleå","Piteå","Skellefteå","Stockholm","Göteborg","Malmö","Örebro","Skinnskatteberg","Linköping","Enköping","Lund")
+$Citys = @("Edsbyn","Orrenjarka","Boden","Kiruna","Helsingborg","Stockholm","Hallstahammar","Lund","Nora","Skinnskatteberg","Mora","Sundsvall","Hudiksvall")
 
 foreach ($Name in $Names.names)
 {
@@ -119,7 +119,7 @@ foreach ($Name in $Names.names)
         Enabled = $true
         Path = "OU=Users,OU=Corp,DC=labdomain,DC=com"
         UserPrincipalName = Remove-Diacritics "$($Name.firstname.ToLower()).$($Name.surname.ToLower())@labdomain.com"
-        Description = "vanlig användare i $($city)"
+        Description = "User located in office $($city)"
         
 
     }
