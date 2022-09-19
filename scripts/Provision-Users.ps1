@@ -80,8 +80,8 @@ function Remove-Diacritics
     }
 }
 
-Write-ToLog -Info -logstring "Scriptexecution started"
-Write-ToLog -Info -logstring "Script executed as user $($env:USERNAME)"
+Write-ToLog -Info -logstring "Scriptexecution started" -logfilepath $logfile
+Write-ToLog -Info -logstring "Script executed as user $($env:USERNAME)" -logfilepath $logfile
 
 try
 {
@@ -89,14 +89,14 @@ try
     New-ADOrganizationalUnit -Name "Corp"
     New-ADOrganizationalUnit -Name "Users" -Path "OU=Corp,DC=labdomain,DC=com"
     
-    Write-ToLog -Info -logstring "Created OU OU=Users=OU=Corp,DC=labdomain,DC=com"
+    Write-ToLog -Info -logstring "Created OU OU=Users=OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
 
     # Get names
     $Names = Invoke-RestMethod -Uri "https://api.namnapi.se/v2/names.json?limit=2000" -Method Get
 }
 catch
 {
-    Write-output "$_.exception.message"
+    Write-ToLog -Warning -logstring "$_.exception.message" -logfilepath $logfile
 }
 
 # Citys
@@ -127,14 +127,12 @@ foreach ($Name in $Names.names)
     try
     {
         New-Aduser @userParams -ErrorAction SilentlyContinue 
-        Write-ToLog -Info -logstring "Created User $($userParams.displayname)"
+        Write-ToLog -Info -logstring "Created User $($userParams.displayname)" -logfilepath $logfile
     }
     catch
     {
-        Write-output "$_.exception.message"
+        Write-ToLog -Warning -logstring "$_.exception.message" -logfilepath $logfile
     }
 
 }
-
-
 
