@@ -11,6 +11,44 @@ Creates 500 users in active directory
 
 #>
 
+$logfile = "C:\Temp\logs\Provision-Users-$(get-date -f "yyyy-MM-dd_HH.mm").csv"
+
+###############################################################################
+# Function Write-ToLog
+###############################################################################
+function Write-ToLog
+{
+    param ([Parameter(Mandatory = $true)]
+    [string]$logstring,
+    [switch]$Info,
+    [switch]$Warning,
+    [switch]$Error,
+    [Parameter(Mandatory = $true)]
+    [string]$logfilepath
+    )
+    $currentDate = (Get-Date -UFormat "%Y-%m-%d")
+    $currentTime = (Get-Date -UFormat "%T")
+    if (-not (Test-Path ($logfilepath | split-path))) { new-item -ItemType Directory -Path ($logfilepath | split-path) | Out-Null }
+    if (-not (Test-Path $logfilepath)) { 
+            new-item -ItemType File -Path $logfilepath | Out-Null 
+            Add-Content $logfilepath "Errorlevel; Date; Time; Logstring "   
+                }
+    if ($info.IsPresent)
+    {
+        Add-Content $logfilepath "Info; $currentDate; $currentTime; $logstring" -Encoding UTF8
+        Write-Host "Info: $currentDate $currentTime | $logstring" -ForegroundColor Green
+    }
+    if ($warning.IsPresent)
+    {
+        Add-Content $logfilepath "Warning; $currentDate; $currentTime; $logstring" -Encoding UTF8
+        Write-Host "Warning: $currentDate $currentTime | $logstring " -ForegroundColor Yellow
+    }
+    if ($error.IsPresent)
+    {
+        Add-Content $logfilepath "Error; $currentDate; $currentTime; $logstring" -Encoding UTF8
+        Write-Host "Error: $currentDate $currentTime | $logstring " -ForegroundColor Red
+    }
+} #End function Write-ToLog
 function Remove-Diacritics
 { 
     param
@@ -42,15 +80,19 @@ function Remove-Diacritics
     }
 }
 
+Write-ToLog -Info -logstring "Scriptexecution started"
+Write-ToLog -Info -logstring "Script executed as user $($env:USERNAME)"
+
 try
 {
     # Create User OU 
     New-ADOrganizationalUnit -Name "Corp"
     New-ADOrganizationalUnit -Name "Users" -Path "OU=Corp,DC=labdomain,DC=com"
-
+    
+    Write-ToLog -Info -logstring "Created OU OU=Users=OU=Corp,DC=labdomain,DC=com"
 
     # Get names
-    $Names = Invoke-RestMethod -Uri "https://api.namnapi.se/v2/names.json?limit=500" -Method Get
+    $Names = Invoke-RestMethod -Uri "https://api.namnapi.se/v2/names.json?limit=2000" -Method Get
 }
 catch
 {
@@ -85,6 +127,7 @@ foreach ($Name in $Names.names)
     try
     {
         New-Aduser @userParams -ErrorAction SilentlyContinue 
+        Write-ToLog -Info -logstring "Created User $($userParams.displayname)"
     }
     catch
     {
@@ -92,4 +135,6 @@ foreach ($Name in $Names.names)
     }
 
 }
+
+
 
