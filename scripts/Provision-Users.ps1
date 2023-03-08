@@ -88,11 +88,26 @@ try
     # Create User OU 
     New-ADOrganizationalUnit -Name "Corp"
     New-ADOrganizationalUnit -Name "Users" -Path "OU=Corp,DC=labdomain,DC=com"
+    New-ADOrganizationalUnit -Name "MemberServers" -Path "OU=Corp,DC=labdomain,DC=com"
+    New-ADOrganizationalUnit -Name "HiSecServers" -Path "OU=Corp,DC=labdomain,DC=com"
+    New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Corp,DC=labdomain,DC=com"
     
     Write-ToLog -Info -logstring "Created OU OU=Users=OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
 
-    # Get names
-    $Names = Invoke-RestMethod -Uri "https://api.namnapi.se/v2/names.json?limit=2000" -Method Get
+    # Get names and remove duplicates and whitespaces
+    $namearray = @()
+    $Names = Invoke-RestMethod -Uri "https://api.namnapi.se/v2/names.json?limit=2500" -Method Get
+    foreach ($name in $names.names)
+    {
+        $object = New-Object -TypeName psobject
+        $object | Add-Member -MemberType NoteProperty -Name "FirstName" -Value "$($name.firstname.Replace(' ',''))"
+        $object | Add-Member -MemberType NoteProperty -Name "SurName" -Value "$($name.surname.Replace(' ',''))"
+        $object | Add-Member -MemberType NoteProperty -Name "BothNames" -Value "$($name.firstname.Replace(' ',''))$($name.surname.Replace(' ',''))"
+        $namearray += $object
+
+    }
+
+    $uniqueNames = $namearray | Sort-Object bothnames -Unique | Select-Object -First 2000
 }
 catch
 {
@@ -102,7 +117,7 @@ catch
 # Citys
 $Citys = @("Edsbyn","Orrenjarka","Boden","Kiruna","Helsingborg","Stockholm","Hallstahammar","Lund","Nora","Skinnskatteberg","Mora","Sundsvall","Hudiksvall")
 
-foreach ($Name in $Names.names)
+foreach ($Name in $uniqueNames)
 {
     
     $city = $(get-random $Citys)
@@ -136,3 +151,35 @@ foreach ($Name in $Names.names)
 
 }
 
+# Move servers and workstations to corresponding OU
+
+try
+{
+    $computersToMove = get-adcomputer -filter * -SearchBase "CN=Computers,DC=labdomain,DC=com" -Properties operatingsystem
+
+
+    foreach ($computer in $computersToMove)
+    {
+        if ($computer.name -match "memberServer-01")
+        {
+            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=MemberServers,OU=Corp,DC=labdomain,DC=com"
+            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=MemberServers,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
+        }
+        elseif ($computer.name -match "hisecServer-01")
+        {
+            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=HiSecServers,OU=Corp,DC=labdomain,DC=com"
+            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=HiSecServers,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
+        }
+        elseif ($computer.name -match "workStation-01")
+        {
+            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=Workstations,OU=Corp,DC=labdomain,DC=com"
+            Write-ToLog -Info -logstring "Created User $($userParams.displayname)" -logfilepath $logfile
+            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=Workstations,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
+        }
+        
+    }
+}
+catch
+{
+    Write-ToLog -Warning -logstring "$_.exception.message" -logfilepath $logfile
+}
