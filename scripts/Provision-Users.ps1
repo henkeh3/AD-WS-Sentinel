@@ -170,10 +170,9 @@ try
             Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=HiSecServers,OU=Corp,DC=labdomain,DC=com"
             Write-ToLog -Info -logstring "moved object $($computer.name) to OU=HiSecServers,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
         }
-        elseif ($computer.name -match "win11-WorkStation-01|win10-WorkStation-01")
+        elseif ($computer.name -match "win11-Client-01|win10-Client-01")
         {
             Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=Workstations,OU=Corp,DC=labdomain,DC=com"
-            Write-ToLog -Info -logstring "Created User $($userParams.displayname)" -logfilepath $logfile
             Write-ToLog -Info -logstring "moved object $($computer.name) to OU=Workstations,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
         }
         
