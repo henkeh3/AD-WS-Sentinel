@@ -4,7 +4,7 @@
 Created on:   August 2022
 Created by:   Henrik N
 Organization: Atea
-Filename:     createDataFactoryResources.ps1
+Filename:     Provision-users.ps1
 ===========================================================================
 .DESCRIPTION
 Creates 2000 users in active directory
@@ -170,7 +170,7 @@ try
             Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=HiSecServers,OU=Corp,DC=labdomain,DC=com"
             Write-ToLog -Info -logstring "moved object $($computer.name) to OU=HiSecServers,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
         }
-        elseif ($computer.name -match "workStation-01")
+        elseif ($computer.name -match "win11-WorkStation-01|win10-WorkStation-01")
         {
             Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=Workstations,OU=Corp,DC=labdomain,DC=com"
             Write-ToLog -Info -logstring "Created User $($userParams.displayname)" -logfilepath $logfile
