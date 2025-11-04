@@ -85,14 +85,31 @@ Write-ToLog -Info -logstring "Script executed as user $($env:USERNAME)" -logfile
 
 try
 {
+   $fqdn = (get-addomain).DistinguishedName
+   
     # Create User OU 
-    New-ADOrganizationalUnit -Name "Corp"
-    New-ADOrganizationalUnit -Name "Users" -Path "OU=Corp,DC=labdomain,DC=com"
-    New-ADOrganizationalUnit -Name "MemberServers" -Path "OU=Corp,DC=labdomain,DC=com"
-    New-ADOrganizationalUnit -Name "HiSecServers" -Path "OU=Corp,DC=labdomain,DC=com"
-    New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Corp,DC=labdomain,DC=com"
+    if (! (Get-ADOrganizationalUnit -Identity "OU=Corp,$($fqdn)"))
+    {
+        New-ADOrganizationalUnit -Name "Corp"
+    }
+    if (! (Get-ADOrganizationalUnit -Identity "OU=Users,OU=Corp,$($fqdn)"))
+    {
+        New-ADOrganizationalUnit -Name "Users" -Path "OU=Corp,$($fqdn)"
+    }
+    if (! (Get-ADOrganizationalUnit -Identity "OU=MemberServers,OU=Corp,$($fqdn)"))
+    {
+        New-ADOrganizationalUnit -Name "MemberServers" -Path "OU=Corp,$($fqdn)"
+    }
+    if (! (Get-ADOrganizationalUnit -Identity "OU=HiSecServers,OU=Corp,$($fqdn)"))
+    {
+        New-ADOrganizationalUnit -Name "HiSecServers" -Path "OU=Corp,$($fqdn)"
+    }
+    if (! (Get-ADOrganizationalUnit -Identity "OU=Workstations,OU=Corp,$($fqdn)"))
+    {
+        New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Corp,$($fqdn)"
+    }
     
-    Write-ToLog -Info -logstring "Created OU OU=Users=OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
+    Write-ToLog -Info -logstring "Created OU:s in OU=Corp,$($fqdn)" -logfilepath $logfile
 
     # Get names and remove duplicates and whitespaces
     $namearray = @()
@@ -132,7 +149,7 @@ foreach ($Name in $uniqueNames)
         AccountPassword = $("aa1234567!!" | ConvertTo-SecureString -AsPlainText -Force)
         ChangePasswordAtLogon = $false
         Enabled = $true
-        Path = "OU=Users,OU=Corp,DC=labdomain,DC=com"
+        Path = "OU=Users,OU=Corp,$($fqdn)"
         UserPrincipalName = Remove-Diacritics "$($Name.firstname.ToLower()).$($Name.surname.ToLower())@labdomain.com"
         Description = "User located in office $($city)"
         
@@ -155,25 +172,25 @@ foreach ($Name in $uniqueNames)
 
 try
 {
-    $computersToMove = get-adcomputer -filter * -SearchBase "CN=Computers,DC=labdomain,DC=com" -Properties operatingsystem
+    $computersToMove = get-adcomputer -filter * -SearchBase "CN=Computers,$($fqdn)" -Properties operatingsystem
 
 
     foreach ($computer in $computersToMove)
     {
         if ($computer.name -match "memberServer-01")
         {
-            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=MemberServers,OU=Corp,DC=labdomain,DC=com"
-            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=MemberServers,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
+            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=MemberServers,OU=Corp,$($fqdn)"
+            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=MemberServers,OU=Corp,$($fqdn)" -logfilepath $logfile
         }
         elseif ($computer.name -match "hisecServer-01")
         {
-            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=HiSecServers,OU=Corp,DC=labdomain,DC=com"
-            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=HiSecServers,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
+            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=HiSecServers,OU=Corp,$($fqdn)"
+            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=HiSecServers,OU=Corp,$($fqdn)" -logfilepath $logfile
         }
         elseif ($computer.name -match "win11-Client-01|win10-Client-01")
         {
-            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=Workstations,OU=Corp,DC=labdomain,DC=com"
-            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=Workstations,OU=Corp,DC=labdomain,DC=com" -logfilepath $logfile
+            Move-ADObject -Identity $computer.DistinguishedName -TargetPath "OU=Workstations,OU=Corp,$($fqdn)"
+            Write-ToLog -Info -logstring "moved object $($computer.name) to OU=Workstations,OU=Corp,$($fqdn)" -logfilepath $logfile
         }
         
     }
