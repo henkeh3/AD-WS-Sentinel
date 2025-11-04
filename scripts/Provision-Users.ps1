@@ -86,8 +86,6 @@ Write-ToLog -Info -logstring "Script executed as user $($env:USERNAME)" -logfile
 try
 {
    $fqdn = (get-addomain).DistinguishedName
-
-   [adsi]::Exists("LDAP://OU=Corp,$($fqdn)")
    
     # Create User OU 
     if (! ([adsi]::Exists("LDAP://OU=Corp,$($fqdn)")))
@@ -201,3 +199,4 @@ catch
 {
     Write-ToLog -Warning -logstring "$_.exception.message" -logfilepath $logfile
 }
+
