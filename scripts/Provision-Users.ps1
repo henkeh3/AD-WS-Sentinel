@@ -86,25 +86,27 @@ Write-ToLog -Info -logstring "Script executed as user $($env:USERNAME)" -logfile
 try
 {
    $fqdn = (get-addomain).DistinguishedName
+
+   [adsi]::Exists("LDAP://OU=Corp,$($fqdn)")
    
     # Create User OU 
-    if (! (Get-ADOrganizationalUnit -Identity "OU=Corp,$($fqdn)"))
+    if (! ([adsi]::Exists("LDAP://OU=Corp,$($fqdn)")))
     {
         New-ADOrganizationalUnit -Name "Corp"
     }
-    if (! (Get-ADOrganizationalUnit -Identity "OU=Users,OU=Corp,$($fqdn)"))
+    if (! ([adsi]::Exists("LDAP://OU=Users,OU=Corp,$($fqdn)")))
     {
         New-ADOrganizationalUnit -Name "Users" -Path "OU=Corp,$($fqdn)"
     }
-    if (! (Get-ADOrganizationalUnit -Identity "OU=MemberServers,OU=Corp,$($fqdn)"))
+    if (! ([adsi]::Exists("LDAP://OU=MemberServers,OU=Corp,$($fqdn)")))
     {
         New-ADOrganizationalUnit -Name "MemberServers" -Path "OU=Corp,$($fqdn)"
     }
-    if (! (Get-ADOrganizationalUnit -Identity "OU=HiSecServers,OU=Corp,$($fqdn)"))
+    if (! ([adsi]::Exists("LDAP://OU=HiSecServers,OU=Corp,$($fqdn)")))
     {
         New-ADOrganizationalUnit -Name "HiSecServers" -Path "OU=Corp,$($fqdn)"
     }
-    if (! (Get-ADOrganizationalUnit -Identity "OU=Workstations,OU=Corp,$($fqdn)"))
+    if (! ([adsi]::Exists("LDAP://OU=Workstations,OU=Corp,$($fqdn)")))
     {
         New-ADOrganizationalUnit -Name "Workstations" -Path "OU=Corp,$($fqdn)"
     }
